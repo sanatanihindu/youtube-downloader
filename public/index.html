@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Video Downloader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    input {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background: #ff0000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .results {
+      margin-top: 20px;
+    }
+    .video-card {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>YouTube Video Downloader</h1>
+    <div>
+      <input type="text" id="urlInput" placeholder="Paste YouTube URL (e.g., https://youtube.com/watch?v=...)">
+      <button id="fetchBtn">Get Download Links</button>
+    </div>
+    <div id="results" class="results"></div>
+  </div>
+
+  <script>
+    document.getElementById('fetchBtn').addEventListener('click', async () => {
+      const url = document.getElementById('urlInput').value;
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<p>Loading...</p>';
+
+      try {
+        const response = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+
+        if (data.error) {
+          resultsDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+          return;
+        }
+
+        // Display video info
+        let html = `
+          <div class="video-card">
+            <h2>${data.title}</h2>
+            <img src="${data.thumbnail}" width="200" style="border-radius: 4px;">
+            <h3>Available Formats:</h3>
+            <ul>
+        `;
+
+        // List all formats
+        data.formats.forEach(format => {
+          html += `
+            <li>
+              <strong>${format.quality}</strong> (${format.type}, ${format.size})
+              <br>
+              <a href="${format.url}" download target="_blank" style="color: #ff0000;">Download</a>
+            </li>
+          `;
+        });
+
+        html += `</ul></div>`;
+        resultsDiv.innerHTML = html;
+      } catch (err) {
+        resultsDiv.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
