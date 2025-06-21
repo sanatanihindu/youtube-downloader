@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --secondary: #282828;
+            --light-gray: #f5f5f5;
+            --dark-gray: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+        }
+        
+        .download-form {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        #videoUrl {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        #videoUrl:focus {
+            border-color: var(--primary);
+        }
+        
+        #fetchBtn {
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        #fetchBtn:hover {
+            background-color: #cc0000;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            display: none;
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .video-info {
+            display: flex;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .thumbnail {
+            width: 300px;
+            height: auto;
+            object-fit: cover;
+        }
+        
+        .video-details {
+            padding: 20px;
+            flex: 1;
+        }
+        
+        .video-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .video-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .video-description {
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .download-options {
+            margin-top: 30px;
+        }
+        
+        .quality-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .quality-content {
+            display: none;
+        }
+        
+        .quality-content.active {
+            display: block;
+        }
+        
+        .download-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .download-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .download-quality {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--dark-gray);
+        }
+        
+        .download-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .download-size {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .download-format {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .download-btn:hover {
+            background-color: #cc0000;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .video-info {
+                flex-direction: column;
+            }
+            
+            .thumbnail {
+                width: 100%;
+                height: auto;
+            }
+            
+            .download-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>YouTube Video Downloader</h1>
+            <p class="subtitle">Download videos in all available formats and qualities</p>
+        </header>
+        
+        <div class="download-form">
+            <div class="input-group">
+                <input type="text" id="videoUrl" placeholder="Paste YouTube video URL here...">
+                <button id="fetchBtn">Get Links</button>
+            </div>
+            <p>Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner spinner"></i> Fetching video information...
+        </div>
+        
+        <div class="results" id="results">
+            <div class="video-info" id="videoInfo">
+                <img class="thumbnail" id="videoThumbnail" src="" alt="Video thumbnail">
+                <div class="video-details">
+                    <h2 class="video-title" id="videoTitle"></h2>
+                    <div class="video-meta">
+                        <span id="videoDuration"></span>
+                        <span id="videoViews"></span>
+                        <span id="videoUploadDate"></span>
+                    </div>
+                    <p class="video-description" id="videoDescription"></p>
+                </div>
+            </div>
+            
+            <div class="download-options">
+                <div class="quality-tabs">
+                    <div class="tab active" data-tab="video">Video</div>
+                    <div class="tab" data-tab="audio">Audio</div>
+                </div>
+                
+                <div class="quality-content active" id="videoContent">
+                    <div class="download-list" id="videoDownloads"></div>
+                </div>
+                
+                <div class="quality-content" id="audioContent">
+                    <div class="download-list" id="audioDownloads"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>This service uses server-side processing to fetch YouTube video download links.</p>
+        <p>For educational purposes only.</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoUrlInput = document.getElementById('videoUrl');
+            const fetchBtn = document.getElementById('fetchBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const results = document.getElementById('results');
+            
+            const videoInfo = document.getElementById('videoInfo');
+            const videoThumbnail = document.getElementById('videoThumbnail');
+            const videoTitle = document.getElementById('videoTitle');
+            const videoDuration = document.getElementById('videoDuration');
+            const videoViews = document.getElementById('videoViews');
+            const videoUploadDate = document.getElementById('videoUploadDate');
+            const videoDescription = document.getElementById('videoDescription');
+            
+            const videoDownloads = document.getElementById('videoDownloads');
+            const audioDownloads = document.getElementById('audioDownloads');
+            
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.quality-content');
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabName = this.getAttribute('data-tab');
+                    contents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabName}Content`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Fetch button click handler
+            fetchBtn.addEventListener('click', fetchVideoInfo);
+            
+            // Also trigger fetch on Enter key
+            videoUrlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    fetchVideoInfo();
+                }
+            });
+            
+            async function fetchVideoInfo() {
+                const url = videoUrlInput.value.trim();
+                
+                if (!url) {
+                    showError('Please enter a YouTube video URL');
+                    return;
+                }
+                
+                const videoId = extractVideoId(url);
+                if (!videoId) {
+                    showError('Invalid YouTube URL. Please enter a valid YouTube video URL.');
+                    return;
+                }
+                
+                // Show loading state
+                loading.style.display = 'block';
+                errorMessage.style.display = 'none';
+                results.style.display = 'none';
+                
+                try {
+                    // Call our server endpoint to fetch video info
+                    const response = await fetch(`/api/video-info?url=${encodeURIComponent(url)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(await response.text() || 'Failed to fetch video information');
+                    }
+                    
+                    const videoData = await response.json();
+                    
+                    // Update the UI with the video data
+                    updateVideoInfo(videoData);
+                    updateDownloadLinks(videoData);
+                    
+                    // Show results
+                    results.style.display = 'block';
+                    
+                } catch (error) {
+                    showError(error.message || 'Failed to fetch video information. Please try again.');
+                } finally {
+                    // Hide loading state
+                    loading.style.display = 'none';
+                }
+            }
+            
+            function updateVideoInfo(data) {
+                videoThumbnail.src = data.thumbnail;
+                videoTitle.textContent = data.title;
+                videoDuration.textContent = data.duration;
+                videoViews.textContent = data.views;
+                videoUploadDate.textContent = data.uploadDate;
+                videoDescription.textContent = data.description;
+            }
+            
+            function updateDownloadLinks(data) {
+                videoDownloads.innerHTML = '';
+                audioDownloads.innerHTML = '';
+                
+                // Add video download options
+                if (data.videoFormats && data.videoFormats.length > 0) {
+                    data.videoFormats.forEach(format => {
+                        const item = createDownloadItem(format, 'video');
+                        videoDownloads.appendChild(item);
+                    });
+                } else {
+                    videoDownloads.innerHTML = '<p>No video formats available</p>';
+                }
+                
+                // Add audio download options
+                if (data.audioFormats && data.audioFormats.length > 0) {
+                    data.audioFormats.forEach(format => {
+                        const item = createDownloadItem(format, 'audio');
+                        audioDownloads.appendChild(item);
+                    });
+                } else {
+                    audioDownloads.innerHTML = '<p>No audio formats available</p>';
+                }
+            }
+            
+            function createDownloadItem(format, type) {
+                const item = document.createElement('div');
+                item.className = 'download-item';
+                
+                let qualityText = format.quality;
+                if (format.fps) {
+                    qualityText += ` (${format.fps}fps)`;
+                }
+                
+                item.innerHTML = `
+                    <div class="download-quality">${qualityText}</div>
+                    <div class="download-meta">
+                        <span class="download-size">${format.size || 'N/A'}</span>
+                        <span class="download-format">${format.mimeType.split('/')[1] || ''}</span>
+                    </div>
+                    <a href="${format.url}" class="download-btn" target="_blank" rel="noopener noreferrer">
+                        <i class="fas fa-download"></i> Download ${type === 'audio' ? 'Audio' : 'Video'}
+                    </a>
+                `;
+                
+                return item;
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                loading.style.display = 'none';
+                results.style.display = 'none';
+            }
+            
+            function extractVideoId(url) {
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[2].length === 11) ? match[2] : null;
+            }
+        });
+    </script>
+</body>
+</html>
